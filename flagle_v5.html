@@ -1,0 +1,353 @@
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{--accent:#6aaa64;--accent-dark:#538d4e;--gray:#d3d6da;--dark:#1a1a1b;--mid:#787c7e;}
+body{margin:0;padding:0;font-family:'Clear Sans','Helvetica Neue',Arial,sans-serif;}
+#fw{
+  width:100%;min-height:100vh;
+  background:#fff;color:var(--dark);
+  display:flex;flex-direction:column;align-items:stretch;
+}
+
+/* HEADER */
+#fhdr{
+  border-bottom:1px solid var(--gray);
+  padding:12px 16px 10px;
+  text-align:center;background:#fff;
+}
+#fhdr h1{font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:var(--dark);}
+#fhdr .sub{font-size:12px;color:var(--mid);margin-top:4px;}
+
+/* RESULT PANEL */
+#rp{display:none;flex-direction:column;align-items:center;gap:10px;padding:16px;border-bottom:1px solid var(--gray);background:#fff;}
+#rp.show{display:flex;}
+#rp-title{font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:2px;}
+#rp-flag{font-size:64px;line-height:1;}
+#rp-name{font-size:20px;font-weight:700;text-align:center;}
+#rp-stats{display:flex;gap:28px;}
+.sn{font-size:28px;font-weight:700;text-align:center;}
+.sl{font-size:11px;color:var(--mid);text-transform:uppercase;text-align:center;}
+#rp-next{font-size:12px;color:var(--mid);}
+#btn-row{display:flex;gap:10px;width:100%;max-width:400px;}
+.rp-btn{
+  flex:1;border:none;border-radius:8px;
+  font-family:inherit;font-size:15px;font-weight:700;
+  letter-spacing:1px;padding:14px 0;
+  cursor:pointer;text-transform:uppercase;touch-action:manipulation;
+}
+#rp-daily{background:var(--accent);color:#fff;}
+#rp-more{background:#fff;color:var(--dark);border:2px solid var(--dark) !important;}
+
+/* MAIN GAME AREA */
+#game{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  gap:14px;padding:16px 16px 20px;
+}
+
+/* FLAG */
+#flag-wrap{
+  width:100%;max-width:420px;
+  aspect-ratio:5/3;
+  position:relative;
+  border:1px solid var(--gray);border-radius:6px;
+  overflow:hidden;background:#888;
+  flex-shrink:0;
+}
+#flag-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
+#flag-overlay{
+  position:absolute;inset:0;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  grid-template-rows:repeat(2,1fr);
+}
+.fc{background:#1a1a1b;transition:opacity 0.4s ease;}
+
+/* DOTS */
+#dots{display:flex;gap:8px;}
+.dot{width:13px;height:13px;border-radius:50%;background:var(--gray);border:1px solid #999;}
+.dot.wrong{background:#c9333a;border-color:#c9333a;}
+.dot.ok{background:var(--accent);border-color:var(--accent);}
+.dot.cur{background:#878a8c;border-color:#878a8c;}
+
+/* TOAST */
+#toast{
+  font-size:14px;font-weight:700;background:var(--dark);color:#fff;
+  border-radius:6px;padding:10px 18px;opacity:0;transition:opacity .25s;
+  text-align:center;width:100%;max-width:420px;min-height:40px;
+  display:flex;align-items:center;justify-content:center;
+}
+#toast.show{opacity:1;}
+
+/* SEARCH */
+#search-wrap{width:100%;max-width:420px;position:relative;}
+#ci{
+  width:100%;padding:14px 16px;
+  font-size:16px;font-family:inherit;
+  border:2px solid var(--gray);border-radius:8px;
+  outline:none;color:var(--dark);background:#fff;
+  -webkit-appearance:none;appearance:none;
+}
+#ci:focus{border-color:#878a8c;}
+#dd{
+  display:none;position:absolute;top:100%;left:0;right:0;
+  background:#fff;border:1px solid var(--gray);border-top:none;
+  border-radius:0 0 8px 8px;overflow-y:auto;max-height:240px;z-index:20;
+}
+#dd.show{display:block;}
+.di{padding:14px 16px;font-size:15px;cursor:pointer;color:var(--dark);border-bottom:1px solid #f0f0f0;}
+.di:last-child{border-bottom:none;}
+.di:hover,.di.hi{background:#f6f6f7;}
+
+/* HISTORY */
+#hist{width:100%;max-width:420px;display:flex;flex-direction:column;gap:6px;}
+.hr{
+  display:flex;align-items:center;gap:10px;
+  padding:11px 14px;border-radius:8px;font-size:14px;
+}
+.hr.ok{background:#d4edda;}
+.hr.no{background:#fde8e8;}
+.hf{font-size:22px;line-height:1;flex-shrink:0;}
+.hn{flex:1;font-weight:600;color:var(--dark);}
+.hic{font-size:18px;flex-shrink:0;}
+
+/* SUBMIT */
+#sub{
+  width:100%;max-width:420px;
+  background:var(--dark);color:#fff;border:none;border-radius:8px;
+  font-family:inherit;font-size:16px;font-weight:700;
+  padding:16px;cursor:pointer;letter-spacing:1px;
+  touch-action:manipulation;
+}
+#sub:disabled{background:var(--gray);color:var(--mid);cursor:default;}
+</style>
+
+<div id="fw">
+  <div id="fhdr">
+    <h1>Flagle</h1>
+    <div class="sub">Guess the flag &middot; 6 attempts &middot; one tile reveals per wrong guess</div>
+  </div>
+
+  <div id="rp">
+    <div id="rp-title"></div>
+    <div id="rp-flag"></div>
+    <div id="rp-name"></div>
+    <div id="rp-stats"></div>
+    <div id="rp-next"></div>
+    <div id="btn-row">
+      <button id="rp-more" class="rp-btn">Play More</button>
+      <button id="rp-daily" class="rp-btn">New Daily</button>
+    </div>
+  </div>
+
+  <div id="game">
+    <div id="flag-wrap">
+      <img id="flag-img" alt="Flag" />
+      <div id="flag-overlay"></div>
+    </div>
+    <div id="dots"></div>
+    <div id="toast"></div>
+    <div id="search-wrap">
+      <input id="ci" type="text" placeholder="Type a country name..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+      <div id="dd"></div>
+    </div>
+    <div id="hist"></div>
+    <button id="sub" disabled>Guess</button>
+  </div>
+</div>
+
+<script>
+var C=[
+  ["AF","Afghanistan"],["AL","Albania"],["DZ","Algeria"],["AD","Andorra"],["AO","Angola"],
+  ["AG","Antigua and Barbuda"],["AR","Argentina"],["AM","Armenia"],["AU","Australia"],
+  ["AT","Austria"],["AZ","Azerbaijan"],["BS","Bahamas"],["BH","Bahrain"],["BD","Bangladesh"],
+  ["BB","Barbados"],["BY","Belarus"],["BE","Belgium"],["BZ","Belize"],["BJ","Benin"],
+  ["BT","Bhutan"],["BO","Bolivia"],["BA","Bosnia and Herzegovina"],["BW","Botswana"],
+  ["BR","Brazil"],["BN","Brunei"],["BG","Bulgaria"],["BF","Burkina Faso"],["BI","Burundi"],
+  ["CV","Cape Verde"],["KH","Cambodia"],["CM","Cameroon"],["CA","Canada"],
+  ["CF","Central African Republic"],["TD","Chad"],["CL","Chile"],["CN","China"],
+  ["CO","Colombia"],["KM","Comoros"],["CG","Congo"],["CD","DR Congo"],["CR","Costa Rica"],
+  ["HR","Croatia"],["CU","Cuba"],["CY","Cyprus"],["CZ","Czech Republic"],["DK","Denmark"],
+  ["DJ","Djibouti"],["DM","Dominica"],["DO","Dominican Republic"],["EC","Ecuador"],
+  ["EG","Egypt"],["SV","El Salvador"],["GQ","Equatorial Guinea"],["ER","Eritrea"],
+  ["EE","Estonia"],["SZ","Eswatini"],["ET","Ethiopia"],["FJ","Fiji"],["FI","Finland"],
+  ["FR","France"],["GA","Gabon"],["GM","Gambia"],["GE","Georgia"],["DE","Germany"],
+  ["GH","Ghana"],["GR","Greece"],["GD","Grenada"],["GT","Guatemala"],["GN","Guinea"],
+  ["GW","Guinea-Bissau"],["GY","Guyana"],["HT","Haiti"],["HN","Honduras"],["HU","Hungary"],
+  ["IS","Iceland"],["IN","India"],["ID","Indonesia"],["IR","Iran"],["IQ","Iraq"],
+  ["IE","Ireland"],["IL","Israel"],["IT","Italy"],["JM","Jamaica"],["JP","Japan"],
+  ["JO","Jordan"],["KZ","Kazakhstan"],["KE","Kenya"],["KI","Kiribati"],["KW","Kuwait"],
+  ["KG","Kyrgyzstan"],["LA","Laos"],["LV","Latvia"],["LB","Lebanon"],["LS","Lesotho"],
+  ["LR","Liberia"],["LY","Libya"],["LI","Liechtenstein"],["LT","Lithuania"],["LU","Luxembourg"],
+  ["MG","Madagascar"],["MW","Malawi"],["MY","Malaysia"],["MV","Maldives"],["ML","Mali"],
+  ["MT","Malta"],["MH","Marshall Islands"],["MR","Mauritania"],["MU","Mauritius"],
+  ["MX","Mexico"],["FM","Micronesia"],["MD","Moldova"],["MC","Monaco"],["MN","Mongolia"],
+  ["ME","Montenegro"],["MA","Morocco"],["MZ","Mozambique"],["MM","Myanmar"],["NA","Namibia"],
+  ["NR","Nauru"],["NP","Nepal"],["NL","Netherlands"],["NZ","New Zealand"],["NI","Nicaragua"],
+  ["NE","Niger"],["NG","Nigeria"],["NO","Norway"],["OM","Oman"],["PK","Pakistan"],
+  ["PW","Palau"],["PA","Panama"],["PG","Papua New Guinea"],["PY","Paraguay"],["PE","Peru"],
+  ["PH","Philippines"],["PL","Poland"],["PT","Portugal"],["QA","Qatar"],["RO","Romania"],
+  ["RU","Russia"],["RW","Rwanda"],["KN","Saint Kitts and Nevis"],["LC","Saint Lucia"],
+  ["VC","Saint Vincent and the Grenadines"],["WS","Samoa"],["SM","San Marino"],
+  ["ST","Sao Tome and Principe"],["SA","Saudi Arabia"],["SN","Senegal"],["RS","Serbia"],
+  ["SC","Seychelles"],["SL","Sierra Leone"],["SG","Singapore"],["SK","Slovakia"],
+  ["SI","Slovenia"],["SB","Solomon Islands"],["SO","Somalia"],["ZA","South Africa"],
+  ["SS","South Sudan"],["ES","Spain"],["LK","Sri Lanka"],["SD","Sudan"],["SR","Suriname"],
+  ["SE","Sweden"],["CH","Switzerland"],["SY","Syria"],["TW","Taiwan"],["TJ","Tajikistan"],
+  ["TZ","Tanzania"],["TH","Thailand"],["TL","Timor-Leste"],["TG","Togo"],["TO","Tonga"],
+  ["TT","Trinidad and Tobago"],["TN","Tunisia"],["TR","Turkey"],["TM","Turkmenistan"],
+  ["TV","Tuvalu"],["UG","Uganda"],["UA","Ukraine"],["AE","United Arab Emirates"],
+  ["GB","United Kingdom"],["US","United States"],["UY","Uruguay"],["UZ","Uzbekistan"],
+  ["VU","Vanuatu"],["VE","Venezuela"],["VN","Vietnam"],["YE","Yemen"],["ZM","Zambia"],
+  ["ZW","Zimbabwe"],["KP","North Korea"],["KR","South Korea"],["MK","North Macedonia"]
+];
+
+function emoji(code){return code.toUpperCase().split('').map(function(c){return String.fromCodePoint(0x1F1E6-65+c.charCodeAt(0));}).join('');}
+function flagUrl(code){return 'https://flagcdn.com/w640/'+code.toLowerCase()+'.png';}
+
+var MAX=6,answer,aIdx,guesses,over,sel,ddIdx,moreMode,used,matches,civ;
+var st={p:0,w:0,s:0};
+
+function dayIdx(){var n=new Date(),m=new Date(n.getFullYear(),n.getMonth(),n.getDate()),e=new Date(2024,0,1);return Math.floor((m-e)/86400000);}
+function secsLeft(){var n=new Date(),x=new Date(n.getFullYear(),n.getMonth(),n.getDate()+1);return Math.floor((x-n)/1000);}
+function fmtTime(s){var h=Math.floor(s/3600),m=Math.floor((s%3600)/60),ss=s%60;return(h<10?'0':'')+h+':'+(m<10?'0':'')+m+':'+(ss<10?'0':'')+ss;}
+
+function pick(random){
+  var idx;
+  if(random){
+    var av=[];for(var i=0;i<C.length;i++)if(used.indexOf(i)<0)av.push(i);
+    if(!av.length){used=[];av=C.map(function(_,i){return i;});}
+    idx=av[Math.floor(Math.random()*av.length)];
+  } else {
+    idx=dayIdx()%C.length;
+  }
+  used.push(idx);aIdx=idx;answer=C[idx];
+}
+
+function init(random){
+  guesses=[];over=false;sel=null;ddIdx=-1;matches=[];moreMode=!!random;
+  if(civ){clearInterval(civ);civ=null;}
+  document.getElementById('rp').classList.remove('show');
+  var inp=document.getElementById('ci');inp.value='';inp.disabled=false;
+  document.getElementById('sub').disabled=true;
+  var dd=document.getElementById('dd');dd.classList.remove('show');dd.innerHTML='';
+  document.getElementById('hist').innerHTML='';
+  document.getElementById('toast').classList.remove('show');
+  pick(random);
+  document.getElementById('flag-img').src=flagUrl(answer[0]);
+  dots();fog();
+}
+
+function dots(){
+  var d=document.getElementById('dots');d.innerHTML='';
+  for(var i=0;i<MAX;i++){
+    var dot=document.createElement('div');dot.className='dot';
+    if(i<guesses.length)dot.classList.add(guesses[i].ok?'ok':'wrong');
+    else if(i===guesses.length&&!over)dot.classList.add('cur');
+    d.appendChild(dot);
+  }
+}
+
+function fog(){
+  var ov=document.getElementById('flag-overlay');ov.innerHTML='';
+  var order=[];for(var i=0;i<6;i++)order.push(i);
+  var seed=aIdx*17;
+  order.sort(function(a,b){return((a*31+seed)%97)-((b*31+seed)%97);});
+  var rev=new Set();for(var i=0;i<guesses.length;i++)rev.add(order[i]);
+  for(var i=0;i<6;i++){
+    var c=document.createElement('div');c.className='fc';
+    if(rev.has(i)||over)c.style.opacity='0';
+    ov.appendChild(c);
+  }
+}
+
+function guess(){
+  if(!sel||over)return;
+  var ok=sel[0]===answer[0];
+  guesses.push({c:sel,ok:ok});
+  histRow(sel,ok);dots();fog();
+  sel=null;ddIdx=-1;matches=[];
+  var inp=document.getElementById('ci');inp.value='';
+  document.getElementById('sub').disabled=true;
+  var dd=document.getElementById('dd');dd.classList.remove('show');dd.innerHTML='';
+  if(ok)end(true);
+  else if(guesses.length>=MAX)end(false);
+  else toast('Wrong! '+(MAX-guesses.length)+' left');
+}
+
+function histRow(c,ok){
+  var h=document.getElementById('hist');
+  var r=document.createElement('div');r.className='hr '+(ok?'ok':'no');
+  var icon=ok?'<i class="ti ti-check" style="color:#2d7a3a"></i>':'<i class="ti ti-x" style="color:#c9333a"></i>';
+  r.innerHTML='<span class="hf">'+emoji(c[0])+'</span><span class="hn">'+c[1]+'</span><span class="hic">'+icon+'</span>';
+  h.appendChild(r);
+}
+
+function end(won){
+  over=true;st.p++;
+  if(won){st.w++;st.s++;}else st.s=0;
+  document.getElementById('rp-title').textContent=won?['Genius!','Excellent!','Great!','Nice!','Close!','Phew!'][guesses.length-1]:'Better luck next time!';
+  document.getElementById('rp-flag').textContent=emoji(answer[0]);
+  document.getElementById('rp-name').textContent=answer[1];
+  var wp=st.p?Math.round(st.w/st.p*100):0;
+  document.getElementById('rp-stats').innerHTML=
+    '<div><div class="sn">'+st.p+'</div><div class="sl">Played</div></div>'+
+    '<div><div class="sn">'+wp+'</div><div class="sl">Win %</div></div>'+
+    '<div><div class="sn">'+st.s+'</div><div class="sl">Streak</div></div>';
+  var ne=document.getElementById('rp-next');
+  if(!moreMode){
+    ne.textContent='Next daily flag in: '+fmtTime(secsLeft());
+    civ=setInterval(function(){var el=document.getElementById('rp-next');if(el)el.textContent='Next daily flag in: '+fmtTime(secsLeft());},1000);
+  } else ne.textContent='';
+  document.getElementById('ci').disabled=true;
+  document.getElementById('sub').disabled=true;
+  fog();
+  setTimeout(function(){document.getElementById('rp').classList.add('show');},500);
+}
+
+function toast(msg){
+  var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show');},2200);
+}
+
+var inp=document.getElementById('ci');
+var dd=document.getElementById('dd');
+
+inp.addEventListener('input',function(){
+  var q=this.value.trim().toLowerCase();
+  sel=null;document.getElementById('sub').disabled=true;
+  dd.innerHTML='';ddIdx=-1;matches=[];
+  if(!q){dd.classList.remove('show');return;}
+  matches=C.filter(function(c){
+    var n=c[1].toLowerCase();
+    return n.startsWith(q)||n.split(' ').some(function(w){return w.startsWith(q);});
+  }).slice(0,8);
+  if(!matches.length){dd.classList.remove('show');return;}
+  matches.forEach(function(c){
+    var item=document.createElement('div');item.className='di';
+    item.textContent=c[1];
+    item.addEventListener('mousedown',function(e){e.preventDefault();pick2(c);});
+    item.addEventListener('touchstart',function(e){e.preventDefault();pick2(c);},{passive:false});
+    dd.appendChild(item);
+  });
+  dd.classList.add('show');
+});
+
+inp.addEventListener('keydown',function(e){
+  var items=dd.querySelectorAll('.di');
+  if(e.key==='ArrowDown'){e.preventDefault();ddIdx=Math.min(ddIdx+1,items.length-1);items.forEach(function(el,i){el.classList.toggle('hi',i===ddIdx);});if(ddIdx>=0&&matches[ddIdx])inp.value=matches[ddIdx][1];}
+  else if(e.key==='ArrowUp'){e.preventDefault();ddIdx=Math.max(ddIdx-1,-1);items.forEach(function(el,i){el.classList.toggle('hi',i===ddIdx);});if(ddIdx>=0&&matches[ddIdx])inp.value=matches[ddIdx][1];}
+  else if(e.key==='Enter'){if(ddIdx>=0&&matches[ddIdx])pick2(matches[ddIdx]);else if(sel)guess();}
+  else if(e.key==='Escape'){dd.classList.remove('show');ddIdx=-1;}
+});
+
+inp.addEventListener('blur',function(){setTimeout(function(){dd.classList.remove('show');},200);});
+
+function pick2(c){sel=c;inp.value=c[1];dd.classList.remove('show');ddIdx=-1;document.getElementById('sub').disabled=false;}
+
+document.getElementById('sub').addEventListener('click',guess);
+document.getElementById('rp-daily').addEventListener('click',function(){used=[];init(false);});
+document.getElementById('rp-more').addEventListener('click',function(){init(true);});
+
+used=[];init(false);
+</script>
